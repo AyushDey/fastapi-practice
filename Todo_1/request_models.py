@@ -16,3 +16,11 @@ class TodoRequest(BaseModel):
             }
         }
     }
+
+class CreateUserRequest(BaseModel):
+    username: str = Field(min_length=1)
+    email: str = Field(min_length=1)
+    first_name: str = Field(min_length=1)
+    last_name: str = Field(min_length=1)
+    password: str = Field(min_length=5)
+    role: str = Field(min_length=1)

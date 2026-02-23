@@ -11,6 +11,8 @@ from starlette import status
 
 todo_router = APIRouter()
 
+#Create the db
+#models.base.metadata.create_all(bind=engine)
 
 # Connect to DB
 def get_db():
