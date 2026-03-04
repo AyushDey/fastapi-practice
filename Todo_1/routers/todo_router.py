@@ -5,7 +5,7 @@ from db import engine, sessionlocal
 from fastapi import APIRouter, Depends, HTTPException, Path
 from models import Todos
 from request_models import TodoRequest
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -29,13 +29,16 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 @todo_router.get("/todos/", status_code=status.HTTP_200_OK)
 async def get_all_data(db: db_dependency):
-    rows = db.query(Todos).all()
+    stmt = select(Todos)
+    rows = db.scalars(stmt).all()
     return rows
 
 
 @todo_router.get("/todos/{todo_id}", status_code=status.HTTP_200_OK)
 async def get_todo_by_id(db: db_dependency, todo_id: int = Path(ge=1)):
-    record = db.query(Todos).filter_by(id=todo_id).first()
+    stmt = select(Todos).where(Todos.id==todo_id)
+    
+    record = db.scalars(stmt).first()
     if record is None:
         raise HTTPException(status_code=404, detail="No records found with {todo_id}")
     else:
