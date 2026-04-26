@@ -1,31 +1,21 @@
 from typing import Annotated
 
 import models
-from db import engine, sessionlocal
+from db import db_dependency
 from fastapi import APIRouter, Depends, HTTPException, Path
 from models import Todos
 from request_models import TodoRequest
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 from starlette import status
+from auth_router import get_current_user
 
 todo_router = APIRouter()
 
 #Create the db
 #models.base.metadata.create_all(bind=engine)
 
-# Connect to DB
-def get_db():
-    db = sessionlocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-# Creating dependency injection for db
-db_dependency = Annotated[Session, Depends(get_db)]
-
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 @todo_router.get("/todos/", status_code=status.HTTP_200_OK)
 async def get_all_data(db: db_dependency):
