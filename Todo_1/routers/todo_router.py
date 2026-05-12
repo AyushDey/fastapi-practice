@@ -8,7 +8,7 @@ from request_models import TodoRequest
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 from starlette import status
-from auth_router import get_current_user
+from .auth_router import get_current_user
 
 todo_router = APIRouter()
 
@@ -18,26 +18,34 @@ todo_router = APIRouter()
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
 @todo_router.get("/todos/", status_code=status.HTTP_200_OK)
-async def get_all_data(db: db_dependency):
-    stmt = select(Todos)
+async def get_all_data(user: user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication failed')
+
+    stmt = select(Todos).where(Todos.owner_id == user.get('id'))
     rows = db.scalars(stmt).all()
     return rows
 
 
 @todo_router.get("/todos/{todo_id}", status_code=status.HTTP_200_OK)
-async def get_todo_by_id(db: db_dependency, todo_id: int = Path(ge=1)):
-    stmt = select(Todos).where(Todos.id==todo_id)
+async def get_todo_by_id(user: user_dependency, db: db_dependency, todo_id: int = Path(ge=1)):
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication failed')
     
+    stmt = select(Todos).where(Todos.id==todo_id and Todos.owner_id == user.get('id'))
     record = db.scalars(stmt).first()
     if record is None:
-        raise HTTPException(status_code=404, detail="No records found with {todo_id}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No records found with {todo_id}")
     else:
         return record
 
 
 @todo_router.post("/todos/create_todo", status_code=status.HTTP_201_CREATED)
-async def create_todo(db: db_dependency, request: TodoRequest):
-    todo_data = Todos(**request.model_dump())
+async def create_todo(user: user_dependency, db: db_dependency, request: TodoRequest):
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication failed')
+    
+    todo_data = Todos(**request.model_dump(), owner_id=user.get('id'))
     if todo_data is None:
         raise HTTPException(status_code=404, detail="No Todo inserted")
     else:
@@ -47,11 +55,15 @@ async def create_todo(db: db_dependency, request: TodoRequest):
 
 @todo_router.put("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_todo(
-    db: db_dependency, request: TodoRequest, todo_id: int = Path(ge=1)
+    user: user_dependency, db: db_dependency, request: TodoRequest, todo_id: int = Path(ge=1)
 ):
-    todo_data = db.query(Todos).filter_by(id=todo_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication failed')
+    
+    todo_stmt = select(Todos).where(Todos.id == todo_id and Todos.owner_id == user.get('id'))
+    todo_data = db.scalars(todo_stmt).first()
     if todo_data is None:
-        raise HTTPException(status_code=404, detail="No todos found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No todos found")
     else:
         response_todo = Todos(**request.model_dump())
         todo_data.title = response_todo.title
@@ -63,8 +75,12 @@ async def update_todo(
 
 
 @todo_router.delete("/todos/{todo_id}", status_code=status.HTTP_200_OK)
-async def delete_todo(db: db_dependency, todo_id: int = Path(ge=1)):
-    todo_data = db.query(Todos).filter_by(id=todo_id).first()
+async def delete_todo(user: user_dependency, db: db_dependency, todo_id: int = Path(ge=1)):
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication failed')
+    
+    todo_stmt = select(Todos).where(Todos.id==todo_id and Todos.owner_id == user.get('id'))
+    todo_data = db.scalars(todo_stmt).first()
     if todo_data is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No todo found"
