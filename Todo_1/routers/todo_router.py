@@ -10,7 +10,9 @@ from sqlalchemy.orm import Session
 from starlette import status
 from .auth_router import get_current_user
 
-todo_router = APIRouter()
+todo_router = APIRouter(
+    tags=['todo']
+)
 
 #Create the db
 #models.base.metadata.create_all(bind=engine)
