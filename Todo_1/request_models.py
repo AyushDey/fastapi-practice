@@ -26,6 +26,19 @@ class CreateUserRequest(BaseModel):
     password: str = Field(min_length=5)
     role: str = Field(min_length=1)
 
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    first_name: str
+    last_name: str
+    is_active: bool
+    role: str
+
+    model_config = {"from_attributes": True}
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str

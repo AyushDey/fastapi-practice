@@ -21,5 +21,5 @@ class Todos(base):
     description: Mapped[str] = mapped_column(String)
     priority: Mapped[int] = mapped_column(Integer)
     complete: Mapped[bool] = mapped_column(Boolean)
-    owner_id: Mapped[int] = mapped_column(String, ForeignKey('users.id'))
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'))
 

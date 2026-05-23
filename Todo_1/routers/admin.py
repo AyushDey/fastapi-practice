@@ -8,7 +8,7 @@ from request_models import TodoRequest
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 from starlette import status
-from .auth_router import get_current_user
+from .auth_router import user_dependency
 
 admin_router = APIRouter(
     prefix='/admin',
@@ -18,7 +18,6 @@ admin_router = APIRouter(
 #Create the db
 #models.base.metadata.create_all(bind=engine)
 
-user_dependency = Annotated[dict, Depends(get_current_user)]
 
 def check_admin(user: user_dependency):
     if user is None or user.get('user_role') != 'admin':
@@ -35,7 +34,7 @@ async def read_all_todos(user: user_dependency, db: db_dependency):
 async def delete_todos(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     if check_admin(user):
         stmt = delete(Todos).where(Todos.id == todo_id)
-        result = db.execute(stmt).first()
+        result = db.execute(stmt)
         if result.rowcount == 0:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No Todo details found')
         db.commit()

@@ -32,7 +32,7 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth_router/token')
 
 def authenticate_user(username: str, password: str, db: db_dependency):
     stmt = select(Users).where(Users.username == username)
-    user = db.scalars(stmt).first()
+    user = db.scalar(stmt)
     if not user:
         return False
     if not crypt_context.verify(password, user.hashed_password):

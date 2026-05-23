@@ -1,11 +1,9 @@
-from typing import Annotated
-
 import models
 from db import db_dependency
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path
 from models import Todos
 from request_models import TodoRequest
-from sqlalchemy import insert, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette import status
 from .auth_router import user_dependency
@@ -65,11 +63,10 @@ async def update_todo(
     if todo_data is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No todos found")
     else:
-        response_todo = Todos(**request.model_dump())
-        todo_data.title = response_todo.title
-        todo_data.description = response_todo.description
-        todo_data.priority = response_todo.priority
-        todo_data.complete = response_todo.complete
+        todo_data.title = request.title
+        todo_data.description = request.description
+        todo_data.priority = request.priority
+        todo_data.complete = request.complete
         db.add(todo_data)
         db.commit()
 
@@ -79,7 +76,7 @@ async def delete_todo(user: user_dependency, db: db_dependency, todo_id: int = P
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication failed')
     
-    todo_stmt = select(Todos).where(Todos.id==todo_id and Todos.owner_id == user.get('id'))
+    todo_stmt = select(Todos).where(Todos.id==todo_id, Todos.owner_id == user.get('id'))
     todo_data = db.scalars(todo_stmt).first()
     if todo_data is None:
         raise HTTPException(
