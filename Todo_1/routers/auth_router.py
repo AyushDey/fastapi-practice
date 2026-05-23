@@ -19,6 +19,7 @@ auth_router = APIRouter(
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 
+
 crypt_context = CryptContext(
     schemes=["argon2"],
     argon2__type="ID",
@@ -84,3 +85,6 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     token = create_access_token(user.username, user.id, user.role, timedelta(minutes=20))
 
     return {'access_token': token, 'token_type': 'bearer'}
+
+
+user_dependency = Annotated[dict, Depends(get_current_user)]

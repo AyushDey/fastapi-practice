@@ -27,8 +27,6 @@ def check_admin(user: user_dependency):
 
 @admin_router.get('/todo', status_code=status.HTTP_200_OK)
 async def read_all_todos(user: user_dependency, db: db_dependency):
-    # if user is None or user.get('user_role') != 'admin':
-    #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Authentication Failed')
     if check_admin(user):
         stmt = select(Todos)
         return db.scalars(stmt).all()
@@ -37,8 +35,7 @@ async def read_all_todos(user: user_dependency, db: db_dependency):
 async def delete_todos(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     if check_admin(user):
         stmt = delete(Todos).where(Todos.id == todo_id)
-        result = db.execute(stmt)
+        result = db.execute(stmt).first()
         if result.rowcount == 0:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No Todo details found')
-        # db.delete(todo_data)
         db.commit()

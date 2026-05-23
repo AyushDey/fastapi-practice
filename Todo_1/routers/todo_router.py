@@ -8,7 +8,7 @@ from request_models import TodoRequest
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 from starlette import status
-from .auth_router import get_current_user
+from .auth_router import user_dependency
 
 todo_router = APIRouter(
     tags=['todo']
@@ -16,8 +16,6 @@ todo_router = APIRouter(
 
 #Create the db
 #models.base.metadata.create_all(bind=engine)
-
-user_dependency = Annotated[dict, Depends(get_current_user)]
 
 @todo_router.get("/todos/", status_code=status.HTTP_200_OK)
 async def get_all_data(user: user_dependency, db: db_dependency):
